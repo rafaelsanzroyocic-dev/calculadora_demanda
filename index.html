@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e293b">
+  <title>Pronóstico de Demanda</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 16px; }
+    .container { max-width: 500px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; text-align: center; margin-bottom: 16px; }
+    .card { background: var(--card); padding: 16px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
+    .section-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: flex; flex-direction: column; }
+    label { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+    input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box; }
+    button { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    button:active { opacity: 0.9; }
+    .result-box { background: #1e293b; color: white; padding: 20px; border-radius: 12px; text-align: center; }
+    .result-main { font-size: 2.2rem; font-weight: 800; color: #38bdf8; margin: 8px 0; }
+    .result-sub { font-size: 0.85rem; color: #cbd5e1; display: flex; justify-content: space-around; margin-top: 12px; border-top: 1px solid #334155; padding-top: 10px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; margin-top: 8px; }
+    .verde { background: #16a34a; color: white; }
+    .ambar { background: #d97706; color: white; }
+    .roja { background: #dc2626; color: white; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Pronóstico Dinámico</h1>
+
+    <div class="result-box" id="panelResultado">
+      <div>Demanda Estimada (Semana t+1)</div>
+      <div class="result-main" id="resTotal">0 uds.</div>
+      <div id="zonaBadge" class="badge verde">Zona Verde (En contrato)</div>
+      <div class="result-sub">
+        <span>Base ajustada: <strong id="resBase">0</strong></span>
+        <span>Colchón seg.: <strong id="resStock">0</strong></span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <div class="section-title">1. Núcleo y Adaptación</div>
+      <div class="grid">
+        <div class="field">
+          <label>D. Contrato (uds)</label>
+          <input type="number" id="dContrato" value="1000">
+        </div>
+        <div class="field">
+          <label>D. Real Semana (Dt)</label>
+          <input type="number" id="dReal" value="1150">
+        </div>
+        <div class="field">
+          <label>Flexibilidad α (0 - 1)</label>
+          <input type="number" id="alpha" step="0.05" min="0" max="1" value="0.40">
+        </div>
+        <div class="field">
+          <label>Tendencia T (uds/sem)</label>
+          <input type="number" id="tendencia" value="25">
+        </div>
+        <div class="field">
+          <label>Semana Contrato (t)</label>
+          <input type="number" id="semana" min="1" value="3">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">2. Factores Multiplicativos (1.0 = neutro)</div>
+      <div class="grid">
+        <div class="field">
+          <label>Estacionalidad (I_est)</label>
+          <input type="number" id="estacionalidad" step="0.05" value="1.05">
+        </div>
+        <div class="field">
+          <label>Promoción (F_prom)</label>
+          <input type="number" id="promocion" step="0.05" value="1.00">
+        </div>
+        <div class="field">
+          <label>Calendario/Entorno (F_ext)</label>
+          <input type="number" id="entorno" step="0.05" value="1.00">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3. Colchón de Flexibilidad</div>
+      <div class="grid">
+        <div class="field">
+          <label>Nivel Servicio (Z)</label>
+          <select id="nivelServicio">
+            <option value="1.28">90% (Z = 1.28)</option>
+            <option value="1.65" selected>95% (Z = 1.65)</option>
+            <option value="2.33">99% (Z = 2.33)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Volatilidad σ (uds)</label>
+          <input type="number" id="sigma" value="120">
+        </div>
+        <div class="field">
+          <label>Lead Time L (semanas)</label>
+          <input type="number" id="leadTime" step="0.5" min="0.1" value="1">
+        </div>
+      </div>
+    </div>
+
+    <button onclick="calcular()">Calcular Pronóstico</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
